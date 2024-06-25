@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="/style.css"> <!-- Your custom styles -->
+</head>
+<body>
+   <div class="containerr">
+    <div class="navbar bg-body-$purple-900 nav">
+        <div class="container-fluid">
+            <div class="navbar-brand nav-img">
+                <img width="34" height="34" src="https://img.icons8.com/external-flat-berkahicon/64/external-Group-Chat-online-meeting-flat-berkahicon.png" alt="external-Group-Chat-online-meeting-flat-berkahicon"/>
+                <a class="title">GroupChat</a>
+            </div>
+        <% if (!currentUser) { %>
+            <div class="auth-btn">
+            <a href="/api/auth/register"><button class="btn btn-outline-primary"><b>Register</b></button></a>
+            <a href="/api/auth/login"><button class="btn btn-outline-primary"><b>Log In</b></button></a>
+        </div>
+          <% } else {%>
+           <form action="/api/auth/logout" method="post"><button class="btn btn-outline-danger" id="logoutButton">Logout</button></form> 
+          <% }%>
+    </div>
+</div>
+    <div class="home">
+    <h1 style="color: #d81b60;font-family: cursive;"> All Groups</h1>
+    <div class="allGrps">
+        <% groups.forEach(function(group) { %>
+            <div class="grp-info card ">
+           <div class="card-title"><%= group.name %></div> 
+           <div class="card-body">
+            <form method="POST" action="/api/groups/<%=group._id%>"><button class="btn btn-primary"> Enter Group</button></div> </form>
+            </div>
+        <% }); %>
+        </div>
+        <div class="newGrp">
+    <form action="/api/groups" method="get">
+        <button class="btn btn-dark"id="create">Create New Group</button>
+    </form>
+</div>
+</div>
+   </div>
+   <script src="/socket.io/socket.io.js"></script>
+   <script>
+       document.getElementById('logoutButton').addEventListener('click', () => {
+         // Clear the token cookie
+         document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
+       
+         // Redirect to the login page or home page
+         window.location.href = '/';
+       });
+       </script>
+</body>
+</html>
+
+    
+
+    
+

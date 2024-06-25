@@ -1,0 +1,88 @@
+body{
+    margin:0;
+    padding:0;
+    background-color: #160D27;
+}
+
+.conatinerr {
+    font-family: cursive;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* justify-content: center; */
+    height: 100vh;
+    margin: 0;
+    text-align: center;
+}
+
+
+
+
+.auth-btn
+{
+    display: flex;
+    gap:15px;
+}
+
+.title{
+    color: #d81b60;
+    text-decoration: none;
+    cursor:auto;
+    font:bold;
+    line-height: 40px;
+    font-size: 30px;
+    font-family: cursive;
+}
+
+.nav-img{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.home{
+    text-align: center;
+    height: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content:flex-start;
+    flex-direction: column;
+    height: 100vh;
+    top:0;
+}
+
+.allGrps{
+    display: flex;
+    flex-direction: row;
+    gap: 40px;
+    flex-wrap: wrap;
+    max-width: 800px;
+    margin: 15px 0;
+}
+
+.grp-info
+{
+    
+    font-weight: bolder;
+    font-family: cursive;
+    font-size: 20px;
+    width:170px;
+    height: 120px;
+}
+
+.newGrp{
+    margin-top: 50px;
+}
+
+.register
+{
+    display: flex;
+    flex-direction: column;
+    margin: 25px 50px;
+    color: #d81b60;
+    font-size: 25px;
+    line-height: 40px;
+    font-family: cursive;
+}
