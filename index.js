@@ -3,13 +3,12 @@ const dotenv = require('dotenv');
 const connectDB = require('./config/db.js');
 const authRoutes = require('./routes/authRoutes.js');
 const groupRoutes = require('./routes/groupRoutes.js');
-const messageRoutes = require('./routes/messageRoutes.js');
+
 const  errorHandler  = require('./middleware/errorHandler.js');
 const socketIO = require('socket.io');
 const http = require('http');
 const cors = require('cors');
 const User = require('./models/User.js');
-
 const path = require("path");
 const methodOverride = require("method-override");
 const cookieParser = require('cookie-parser');
