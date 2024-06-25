@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
    
     const token = window.chatToken;
     const groupId = window.groupId;
-    console.log('Token retrieved from embedded script:', groupId);
+   
       const socket = io({
           auth: {
               token: token,
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }});
   
     function outputUsers(group) {
-      console.log(group);
+      
       const userList = document.getElementById('users');
       userList.innerHTML = '';
       group.group.members.forEach((user) => {
@@ -73,6 +73,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('leave-btn').addEventListener('click', () => {
       socket.emit('disconnect',groupId);
-      console.log(groupId);
+      
       window.location.href='/';
     });

@@ -3,7 +3,6 @@ const dotenv = require('dotenv');
 const connectDB = require('./config/db.js');
 const authRoutes = require('./routes/authRoutes.js');
 const groupRoutes = require('./routes/groupRoutes.js');
-
 const  errorHandler  = require('./middleware/errorHandler.js');
 const socketIO = require('socket.io');
 const http = require('http');
@@ -18,14 +17,14 @@ const jwtAuthMiddleware = require('./middleware/jwtAuth.js');
 const attachCurrentUser = require('./middleware/attachCurrentUser.js')
 const jwt = require('jsonwebtoken');
 
-// Apply this middleware globally or to specific routes
+
 
 dotenv.config();
 
 connectDB();
 
 const app = express();
-// app.use(authMiddleware);
+
 app.use(jwtAuthMiddleware);
 app.use(attachCurrentUser);
 app.use(express.json());
@@ -38,7 +37,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.engine("ejs", ejsMate);
 const session = require('express-session');
-const MongoStore = require('connect-mongo'); // For storing sessions in MongoDB
+const MongoStore = require('connect-mongo');
 
 
 app.use(errorHandler);
@@ -46,7 +45,7 @@ app.use(session({
     secret: process.env.SESSION_SECRET || 'your_secret_key',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }) // Use MongoDB to store sessions
+    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }) 
 }));
 
 
@@ -61,7 +60,7 @@ const io = socketIO(server, {
 
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
-  console.log("Token in Socket.io:", token);
+
   if (token) {
       try {
           const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -83,19 +82,16 @@ socket.on('joinGroup', async (groupId) => {
   socket.join(groupId);
   socket.groupId = groupId;
   await User.findByIdAndUpdate(socket.user, { onlineStatus: true });
- 
   const group = await outputUsers(groupId);
-
   io.to(groupId).emit('groupUser',{
     group: group,
   });
 });
 
-socket.on('leaveGroup', async (groupId) => {
-  socket.leave(groupId);
-  await User.findByIdAndUpdate(socket.user, { onlineStatus: false });
-  
-});
+    socket.on('leaveGroup', async (groupId) => {
+      socket.leave(groupId);
+      await User.findByIdAndUpdate(socket.user, { onlineStatus: false });
+    });
 
 
   socket.on('sendMessage', async ({ groupId, content }) => {
@@ -103,22 +99,18 @@ socket.on('leaveGroup', async (groupId) => {
         if (!group) {
             return res.status(404).json({ error: 'Sender or group not found' });
         }
-        // Create the message object
         const message = {
             content,
             sender: socket.user,
             createdAt: new Date(),
         };
-        // Push the message to the group's messages array
         group.messages.push(message);
-        console.log(group);
-        // Save the updated group document
         await group.save();
         const user = await User.findById(message.sender);
         
     io.to(groupId).emit('newMessage', {
     content: message.content,
-    sender: user.username, // Assuming sender is populated with username
+    sender: user.username, 
     createdAt: message.createdAt,
 });
   });
@@ -128,20 +120,12 @@ socket.on('leaveGroup', async (groupId) => {
         return; 
     }
     try {
-        // Update user's online status to false
         await User.findByIdAndUpdate(socket.user, { onlineStatus: false });
-
-        // Remove user from group members array
         await Group.findByIdAndUpdate(socket.groupId, {
             $pull: { members: socket.user }
         });
-
-        console.log(`User ${socket.user} left the group ${socket.groupId}.`);
-        // Emit updated group details to clients
         const updatedGroup = await outputUsers(socket.groupId);
-        console.log("Line146",updatedGroup);
         io.to(socket.groupId).emit('groupUser', { group: updatedGroup });
-
     } catch (error) {
         console.error('Error handling disconnect:', error);
     }
@@ -152,10 +136,8 @@ socket.on('leaveGroup', async (groupId) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/groups', groupRoutes);
 app.get('/',jwtAuthMiddleware,attachCurrentUser,async (req,res)=>{
-
     const groups = await Group.find();
    const  currentUser=res.locals.currentUser;
-   
     res.render('index', { groups,  currentUser});
     
 })
