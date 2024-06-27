@@ -11,7 +11,7 @@ const createGroup = asyncHandler(async (req, res) => {
   const currentUser = res.locals.currentUser;
   const { newGrp } = req.body;
   
-  const group = await Group.create({ name:newGrp, members: [currentUser._id] });
+  const group = await Group.create({ name:newGrp, createdBy:currentUser._id, members: [currentUser._id] });
   console.log(newGrp,"group created successfully");
   res.redirect('/');
 });
@@ -97,21 +97,37 @@ const leaveGroup = asyncHandler(async (req, res) => {
       (member) => member.toString() !== currentUserIdStr
     );
     await group.save();
-  
-    if (group.members.length === 0) {
-     
-      await group.deleteOne();
-     console.log("Group deleted because of no users");
-     res.redirect('/');
-    } else {
-      
-      await group.save();
       res.redirect('/');
-    }
+    
   } else {
     res.status(404);
     throw new Error('Group not found');
   }
 });
 
-module.exports = { createGroup, joinGroup, leaveGroup,newGrp,enterGroup };
+const deleteGroup = asyncHandler(async (req, res,next) => {
+  const group = await Group.findById(req.params.id);
+  const currentUser = res.locals.currentUser;
+  if (!currentUser) {
+    res.status(401);
+    throw new Error('User not authorized');
+  }
+  if (group) {
+    const currentUserIdStr = currentUser._id.toString();
+    if(group.createdBy.toString()===currentUserIdStr)
+      {
+        await group.deleteOne();
+         console.log("Group deleted because of OWNER");
+         res.redirect('/');
+      }
+      else{
+    let err = new Error('Only Owner of this group can delete the group');
+    next(err);
+      }
+  } else {
+    res.status(404);
+    throw new Error('Group not found');
+  }
+});
+
+module.exports = { createGroup, joinGroup, leaveGroup,newGrp,enterGroup,deleteGroup };

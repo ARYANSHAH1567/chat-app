@@ -11,7 +11,7 @@
     />  -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <link rel="stylesheet" href="/chat.css" />
-    <title>ChatCord App</title>
+    <title>GroupChat</title>
   </head>
   <body>
     <div class="chat-container">
@@ -21,42 +21,54 @@
                 <img width="34" height="34" src="https://img.icons8.com/external-flat-berkahicon/64/external-Group-Chat-online-meeting-flat-berkahicon.png" alt="external-Group-Chat-online-meeting-flat-berkahicon"/>
                 <a class="title">GroupChat</a>
             </div>
+            <div class="dlt-btn">
             <form method="POST" action="/api/groups/<%=group._id%>?_method=delete"><button class="btn btn-danger" id="leave-btn"> Leave Group</button> </form>
+            <form method="POST" action="/api/groups/<%=group._id%>/delete"><button class="btn btn-danger" id="dlt-btn"> Delete Group</button> </form>
+          </div>
           </div>
     </div>
       <main class="chat-main">
         <div class="chat-sidebar">
-          <h3><i class="fas fa-comments"></i> Group Name:</h3>
-          <h2 id="room-name"><%=group.name%></h2>
-          <h3><i class="fas fa-users"></i> Users</h3>
+          <h3><i class="fas fa-users"></i>Users Online &darr;</h3>
           <ul id="users">
           </ul>
         </div>
-        <div class="chat-messages">
+        <div class="chat-bar">
+          <div class="chat-info">
+            <div class="chat-title">
+              <%= group.name %>
+            </div>
+          <div class="chat-messages">
             <% sortedMessages.forEach(message => { %>
                 <div class="message">
-                    <p class="meta">
+                    <span class="meta">
                         <%= message.sender.username %> <!-- Assuming sender is populated -->
                         <span><%= new Date(message.createdAt).toLocaleString(); %></span>
-                    </p>
-                    <p class="text"><%= message.content %></p>
+                    </span>
+                    <br>
+                    <span class="text"><%= message.content %></span>
                 </div>
             <% }); %>
         </div>
-      </main>
-      <div class="chat-form-container">
+          </div>
+      <div class="chat-send">
         <form id="chat-form">
-          <input
+          <div class="chat-inp">
+            <input
             id="msg"
             type="text"
             placeholder="Enter Message"
             required
             autocomplete="off"
           />
-          <button class="btn btn-success"><i class="fas fa-paper-plane"></i>Send</button>
+          <button class="send-btn"><i class="fas fa-paper-plane"></i>Send</button>
+          </div>
         </form>
       </div>
+      </div>
+      </main>
     </div>
+    
     <script>
         window.chatToken = "<%= token %>";
         window.groupId = "<%= group._id %>";

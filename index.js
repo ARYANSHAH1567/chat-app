@@ -58,6 +58,8 @@ const io = socketIO(server, {
   },
 });
 
+
+// Middleware for authenticating socket connections
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
 
@@ -76,60 +78,120 @@ io.use((socket, next) => {
   }
 });
 
-io.on('connection', (socket) => {
- 
-socket.on('joinGroup', async (groupId) => {
-  socket.join(groupId);
-  socket.groupId = groupId;
-  await User.findByIdAndUpdate(socket.user, { onlineStatus: true });
-  const group = await outputUsers(groupId);
-  io.to(groupId).emit('groupUser',{
-    group: group,
-  });
+// Handling socket connections
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.user = decoded.id;
+      next();
+    } catch (err) {
+      console.error('Invalid token:', err);
+      next(new Error('Authentication error'));
+    }
+  } else {
+    console.error('No token provided');
+    next(new Error('Authentication error'));
+  }
 });
 
-    socket.on('leaveGroup', async (groupId) => {
-      socket.leave(groupId);
-      await User.findByIdAndUpdate(socket.user, { onlineStatus: false });
-    });
+io.on('connection', (socket) => {
+  console.log('New connection:', socket.id);
+
+  // Join group event
+  socket.on('joinGroup', async (groupId) => {
+    console.log(`joinGroup event received for group ID: ${groupId}`);
+    socket.join(groupId);
+    socket.groupId = groupId;
+
+    await User.findByIdAndUpdate(socket.user, { onlineStatus: true });
+    await Group.findByIdAndUpdate(groupId, { $addToSet: { members: socket.user } });
+
+    const group = await outputUsers(groupId);
+    if (group) {
+      io.to(groupId).emit('groupUser', { group });
+    } else {
+      console.error(`Cannot join group, group not found for ID: ${groupId}`);
+    }
+  });
 
 
   socket.on('sendMessage', async ({ groupId, content }) => {
-        const group = await Group.findById(groupId);
-        if (!group) {
-            return res.status(404).json({ error: 'Sender or group not found' });
-        }
-        const message = {
-            content,
-            sender: socket.user,
-            createdAt: new Date(),
-        };
-        group.messages.push(message);
-        await group.save();
-        const user = await User.findById(message.sender);
-        
-    io.to(groupId).emit('newMessage', {
-    content: message.content,
-    sender: user.username, 
-    createdAt: message.createdAt,
+    const group = await Group.findById(groupId);
+    if (!group) {
+        return res.status(404).json({ error: 'Sender or group not found' });
+    }
+    const message = {
+        content,
+        sender: socket.user,
+        createdAt: new Date(),
+    };
+    group.messages.push(message);
+    await group.save();
+    const user = await User.findById(message.sender);
+    
+io.to(groupId).emit('newMessage', {
+content: message.content,
+sender: user.username, 
+createdAt: message.createdAt,
 });
+});
+
+
+  // Leave group event
+  socket.on('leaveGroup', async (groupId) => {
+    console.log(`leaveGroup event received for group ID: ${groupId}`);
+    socket.leave(groupId);
+    await User.findByIdAndUpdate(socket.user, { onlineStatus: false });
+    await Group.findByIdAndUpdate(groupId, { $pull: { members: socket.user } });
+
+    const group = await outputUsers(groupId);
+    if (group) {
+      io.to(groupId).emit('groupUser', { group });
+    } else {
+      console.error(`Cannot leave group, group not found for ID: ${groupId}`);
+    }
+    socket.groupId = null;
   });
 
+  // Handle disconnect event
   socket.on('disconnect', async () => {
+    console.log(`Disconnect event for user: ${socket.user}`);
     if (!socket.user) {
-        return; 
+      return;
     }
     try {
-        await User.findByIdAndUpdate(socket.user, { onlineStatus: false });
+      await User.findByIdAndUpdate(socket.user, { onlineStatus: false });
+      if (socket.groupId) {
         await Group.findByIdAndUpdate(socket.groupId, {
-            $pull: { members: socket.user }
+          $pull: { members: socket.user }
         });
-        const updatedGroup = await outputUsers(socket.groupId);
-        io.to(socket.groupId).emit('groupUser', { group: updatedGroup });
+        const group = await outputUsers(socket.groupId);
+        if (group) {
+          io.to(socket.groupId).emit('groupUser', { group });
+        } else {
+          console.error(`Cannot find group to update on disconnect for ID: ${socket.groupId}`);
+        }
+      }
     } catch (error) {
-        console.error('Error handling disconnect:', error);
+      console.error('Error handling disconnect:', error);
     }
-});
+  });
+
+  // Fetch users for the group
+  async function outputUsers(groupId) {
+    try {
+      const populatedGroup = await Group.findById(groupId).populate('members');
+      if (!populatedGroup) {
+        console.error('Group not found');
+        return;
+      }
+      return populatedGroup;
+    } catch (err) {
+      console.error('Error fetching group users:', err);
+    }
+  }
 });
 
 
@@ -157,15 +219,3 @@ app.use((err, req, res, next) => {
 });
 
 
-async function outputUsers(group) {
-  try {
-      const populatedGroup = await Group.findById(group).populate('members');
-      if (!populatedGroup) {
-          console.error('Group not found');
-          return;
-      }
-     return populatedGroup;
-  } catch (err) {
-      console.error('Error fetching group users:', err);
-  }
-}
